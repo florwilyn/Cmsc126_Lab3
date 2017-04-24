@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title>Wisps</title>
+	<link rel="stylesheet" type="text/css" href="style.css">
+</head>
+<body>
+	<canvas id="game"></canvas>
+	<canvas id="description"></canvas>
+	
+	<p id="msg">NEW GAME</p>
+	<p id="msg2">Press spacebar to play. ENJOY!</p>
+
+	 <script type="text/javascript">
+		var hs = 0;
+		var canvas = document.getElementById('game');
+		var context = canvas.getContext('2d');
+
+		canvas.width = window.innerWidth;
+		canvas.height = window.innerHeight-100;
+
+		var description = document.getElementById('description');
+		var ctx = description.getContext('2d');
+
+		description.width = window.innerWidth;
+		description.height = 100;
+
+		var Player = new Player();
+		var Score = new Score();
+			
+		var divOne = document.getElementById('msg');
+		var divTwo = document.getElementById('msg2');
+
+		Game();
+		
+		function Game(){
+			wisps = [];
+			displayWisps = new drawWisps();
+			score = 0; 
+
+			text = new Info();
+			gameOver = true; 
+
+			text.details();
+			text.highScore();
+			displayWisps.init();
+
+			foodX = Math.random()*canvas.width; foodY = Math.random()*canvas.height;
+		}
+
+		window.addEventListener("keypress", function(e){
+			if (e.keyCode == 32 && gameOver){
+				divOne.style.display='none';
+				divTwo.style.display='none';
+				new Game();
+				gameOver = false;
+			}
+		});
+
+		function Info(){
+			//display
+			this.details = function(){
+				ctx.font = "50px Courier New";
+				ctx.fillStyle = "white";
+				ctx.textAlign = "center";
+				ctx.fillText("Wisps", description.width/2, description.height/2);
+				ctx.font = "20px Courier New";
+				ctx.fillText("Collect the red dots while avoiding the wisps.",description.width/2,(description.height/2)+30);
+				ctx.textAlign = "left";
+				ctx.font = "30px Courier New";
+				ctx.fillStyle = "black";
+				ctx.fillRect(50,(description.height/2)-100,500,100);
+				ctx.fill();
+				ctx.fillStyle = "white";
+				ctx.fillText("SCORE ",100,(description.height/2)+30);
+				ctx.textAlign = "center";
+				ctx.fillText(score,150,(description.height/2));
+				ctx.fillText("HIGH SCORE ",description.width-150,(description.height/2)+30);
+			}
+			this.highScore = function(){
+				ctx.fillStyle = "black";
+				ctx.fillRect(description.width-250,(description.height/2)-100,500,100);
+				ctx.fill();
+				ctx.textAlign = "center";
+				ctx.font = "30px Courier New";
+				ctx.fillStyle = "white";
+				ctx.fillText(hs,description.width-150,(description.height/2));
+			}
+			this.updateScore = function() {
+				ctx.fillStyle = "black";
+				ctx.fillRect(50,(description.height/2)-100,500,100);
+				ctx.fill();
+				ctx.textAlign = "center";
+				ctx.font = "30px Courier New";
+				ctx.fillStyle = "white";
+				ctx.fillText(score,150,(description.height/2));
+			}
+		}
+
+		function drawWisps(){
+			this.init = function(){
+				for (var i = 0; i < 10; i++)
+					wisps.push(new createWisps());
+			}
+			this.multiply = function(){
+				for (var i = 0; i < 3; i++)
+					wisps.push(new createWisps());
+			}
+		}
+
+		function Player(){
+			this.draw = function(posX, posY){
+				context.shadowBlur = 10;
+				context.shadowColor = "orange";
+				context.beginPath();
+				context.fillStyle = "red";
+				context.arc(posX,posY,10,Math.PI*2,false);
+				context.fill();
+				context.shadowBlur = 0;
+			}
+		}
+
+		function Score(){
+			this.draw = function(x, y){
+				context.shadowBlur = 10;
+				context.shadowColor = "orange";
+				context.beginPath();
+				context.fillStyle = "red";
+				context.arc(x,y,10,Math.PI*2,false);
+				context.fill();
+				context.shadowBlur = 0;
+			}
+		}
+
+		function createWisps(posX, posY){
+			this.x = Math.random()*canvas.width;
+			this.y = Math.random()*(canvas.height - 100);
+			
+			this.vx = Math.random()*18-10;
+			this.vy = Math.random()*18-10;
+		}
+
+		function updateScore(){
+			ctx.fillStyle = "black";
+			ctx.fillRect(50,(description.height/2)-100,500,100);
+			ctx.fill();
+			ctx.textAlign = "center";
+			ctx.font = "30px Courier New";
+			ctx.fillStyle = "white";
+			ctx.fillText(score,150,(description.height/2));
+		}
+
+		function GameWorld(){
+			context.globalCompositeOperation = "source-over";
+			context.fillStyle = "rgba(0, 0, 0, 0.3)";
+			context.fillRect(0, 0, canvas.width, canvas.height);
+
+			for(var t = 0; t < wisps.length; t++){
+				var wisp = wisps[t];
+
+				context.shadowBlur = 20;
+				context.shadowColor = "blue";
+				context.beginPath();
+
+				context.fillStyle = "blue";
+				context.arc(wisp.x, wisp.y, 7, Math.PI*2, false);
+				context.stroke();
+				context.fill();
+				context.shadowBlur = 0;
+				
+				wisp.x += wisp.vx;
+				wisp.y += wisp.vy;
+
+				if(wisp.x < -50) 
+					wisp.x = canvas.width+50;
+				if(wisp.y < -50) 
+					wisp.y = canvas.height+50;
+				if(wisp.x > canvas.width+50) 
+					wisp.x = -50;
+				if(wisp.y > canvas.height+50) 
+					wisp.y = -50;
+
+				if (typeof playerx!="undefined" || typeof playery!="undefined"){	
+					if (Math.abs(Math.round(wisp.x)-Math.round(playerx))<=20 && Math.abs(Math.round(wisp.y)-Math.round(playery))<=20) {
+						gameOver = true;
+						divOne.style.display='block';
+						divTwo.style.display='block';
+						divOne.innerHTML = "GAME OVER";
+						divTwo.innerHTML = "Press spacebar to play again.";
+					}
+				}
+			}
+
+			if (!gameOver){
+				if (typeof mousePos != "undefined"){
+					playerx = mousePos.x;
+					playery = mousePos.y;
+					Player.draw(playerx, playery);
+				}
+				Score.draw(foodX,foodY);
+
+				if (Math.abs(foodX-playerx) <= 20 && Math.abs(foodY-playery) <=20 && typeof mousePos!= undefined){
+					var Randx = Math.random()*canvas.width;
+					var Randy = Math.random()*canvas.height;
+					score++;
+					text.updateScore();
+					foodX = Math.round(Randx);
+					foodY = Math.round(Randy);
+
+					if (wisps.length < 65){
+						if (score == 7){
+							displayWisps.multiply();
+						}
+						else if (score%5 == 0 && score>7)
+							displayWisps.multiply();
+					}
+				}
+			}
+
+			else{
+				if (hs < score){
+					hs = score;
+				}
+			}
+
+			text.highScore();
+				
+		}
+
+		setInterval(GameWorld, 50);
+
+		function getMousePos(canvas, evt) {
+	       	var rect = canvas.getBoundingClientRect();
+	        return {
+	          x: evt.clientX - rect.left,
+	          y: evt.clientY - rect.top
+	        };
+	     }
+
+		canvas.addEventListener('mousemove', function(evt) {
+	        mousePos = getMousePos(canvas, evt);
+	        if (!gameOver){
+		        context.beginPath();
+		        Player.draw(mousePos.x, mousePos.y);
+	    	}
+	    	}, false);
+
+	</script>
+</body>
+</html>
